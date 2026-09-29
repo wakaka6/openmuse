@@ -57,13 +57,13 @@ The computer combines **persistent Chromium and an optional Linux workspace**. T
 | **Finance** | Import transaction CSV to create a spending summary with categories, transactions, and a savings-goal action. |
 | **Gmail & Calendar** | Google OAuth adapters, complete mail threads, drafts/attachments, calendar discovery, and reviewed event creation/update/deletion. Live credentials required. |
 | **Personal context** | Editable name, tone, avatar, and memories. Background-update preferences and durable in-app notifications. |
-| **Rich Threads** | CopilotKit Intelligence persistence in every mode, with a stable main conversation, side chats, renaming, archiving, restoring, and replay. A server-only project key is required. |
+| **Rich Threads** | Optional CopilotKit Intelligence persistence with a stable main conversation, side chats, renaming, archiving, restoring, and replay. Without a server-only project key the app keeps a single locally stored conversation. |
 
 The [feature inventory](docs/FEATURES.md) describes implemented capabilities and planned extensions. Health/bank/social connectors, device push, voice, generated executable tools, and automatic reservations/payments are on the [roadmap](ROADMAP.md).
 
 ## Quick start
 
-**Requirements:** Node 24 LTS, pnpm 11.19.0, and a CopilotKit Intelligence project key. The local sample app needs no model, Google account, or Docker.
+**Requirements:** Node 24 LTS and pnpm 11.19.0. The local sample app needs no model, Google account, Docker, or external service. A CopilotKit Intelligence project key is optional and enables server-side Rich Threads.
 
 ```sh
 git clone https://github.com/CopilotKit/OpenMuse.git openmuse
@@ -72,7 +72,8 @@ pnpm install --frozen-lockfile
 cp .env.example .env
 npx copilotkit@latest login
 npx copilotkit@latest project select
-# Set CPK_INTELLIGENCE_API_KEY in .env to the generated server-only project key.
+# Optional: set CPK_INTELLIGENCE_API_KEY in .env to the generated server-only
+# project key to enable Rich Threads. Skip this step to run fully local.
 pnpm dev
 ```
 
@@ -98,8 +99,8 @@ For iOS or Android, use `pnpm --dir apps/mobile ios` or `pnpm --dir apps/mobile 
 Copy the commented settings in [.env.example](.env.example) into your private `.env`:
 
 1. Set `AGENT_BACKEND=model`, `MODEL=provider/model-id`, and the matching provider key. CopilotKit supports the configured OpenAI, Anthropic or Google provider. Fictional data can still be used with a real model. Provider keys stay on the server.
-2. Create or select a CopilotKit Intelligence project with `npx copilotkit@latest login` and `npx copilotkit@latest project select`. Keep the generated `CPK_INTELLIGENCE_API_KEY` on the server.
-3. For personal mail/calendar, set `WORKSPACE_MODE=live`, the generated `CPK_INTELLIGENCE_API_KEY`, a random `OPENMUSE_ACCESS_KEY` of at least 24 characters, and `TOKEN_ENCRYPTION_KEY` containing 32 random bytes encoded as base64. Restart the API.
+2. For server-persisted conversations (optional), create or select a CopilotKit Intelligence project with `npx copilotkit@latest login` and `npx copilotkit@latest project select`. Keep the generated `CPK_INTELLIGENCE_API_KEY` on the server.
+3. For personal mail/calendar, set `WORKSPACE_MODE=live`, the optional `CPK_INTELLIGENCE_API_KEY` when you want server-persisted threads, a random `OPENMUSE_ACCESS_KEY` of at least 24 characters, and `TOKEN_ENCRYPTION_KEY` containing 32 random bytes encoded as base64. Restart the API.
 4. Configure a Google OAuth web client with Gmail and Calendar APIs enabled. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; register `${PUBLIC_API_URL}/api/google/callback` as its redirect URI. Configure consent/test-user access in your Google project.
 5. Open **Apps → Gmail** (or **Google Calendar**), connect read access, and grant write access when needed. Every send or calendar change still requires its own stored review. Changing/disconnecting the account invalidates pending connection-bound work.
 
@@ -137,9 +138,11 @@ For a separate task worker, configure the same `DATABASE_URL`, secrets and share
 
 No hidden retry occurs after an uncertain external write. Review its provider outcome before creating a replacement. Pausing/cancelling prevents subsequent task steps; an already approved in-flight provider request may finish.
 
-## CopilotKit Rich Threads
+## CopilotKit Rich Threads (optional)
 
-Every deployment requires `CPK_INTELLIGENCE_API_KEY` on the API server for CopilotKit Intelligence conversation persistence and replay. Create or select a project with `npx copilotkit@latest login` and `npx copilotkit@latest project select`, set the generated server-only key, and restart the API. The native menu uses `useThreads`; rich tool results link back to saved tasks, documents, and browser sessions.
+Setting `CPK_INTELLIGENCE_API_KEY` on the API server enables CopilotKit Intelligence conversation persistence and replay. Create or select a project with `npx copilotkit@latest login` and `npx copilotkit@latest project select`, set the generated server-only key, and restart the API. The native menu uses `useThreads`; rich tool results link back to saved tasks, documents, and browser sessions.
+
+Without the key, the CopilotKit runtime runs in local SSE mode and the app keeps one locally stored conversation — no CopilotKit cloud access is required. Thread lists, renaming, archiving, and cross-device replay need the key.
 
 Intelligence is a separate service and is not included in this repository's MIT license. No project key is shipped. [Configuration and validation boundaries](docs/RICH-THREADS.md).
 

@@ -20,7 +20,7 @@ pnpm --dir apps/mobile ios
 pnpm --dir apps/mobile android
 ```
 
-The default API is `http://localhost:8787`, or `http://10.0.2.2:8787` on the Android emulator. Set `EXPO_PUBLIC_API_URL` to your reachable server URL for a physical device or deployment. Live mode asks for the server access key; local mode opens the fictional workspace automatically. Tokens stay in memory.
+The default API is `http://localhost:8787`, or `http://10.0.2.2:8787` on the Android emulator. The sign-in screen has a **Server address** field saved on the device, so a physical device can point at any reachable host (for example `http://192.168.1.20:8787`); `EXPO_PUBLIC_API_URL` still sets the build-time default. Live mode asks for the server access key; local mode opens the fictional workspace automatically. Tokens stay in memory.
 
 PDFs use `react-native-pdf` and `react-native-blob-util` in an Expo **development build**. Expo Go does not include these native modules. The config plugins in `app.json` configure the native projects. Web uses the browser’s real PDF reader, with page/zoom controls and download/print access. PDF form fields save a new server artifact.
 

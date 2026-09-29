@@ -26,28 +26,29 @@ function liveConfig(intelligenceApiKey?: string): Config {
   };
 }
 
-const missingKeyMessage =
-  "OpenMuse requires CPK_INTELLIGENCE_API_KEY. " +
+const blankKeyMessage =
+  "Blank CPK_INTELLIGENCE_API_KEY. " +
+  "CPK_INTELLIGENCE_API_KEY enables CopilotKit Intelligence Rich Threads. " +
   "Run `npx copilotkit@latest login` and `npx copilotkit@latest project select`, " +
   "then set the generated server-only key. " +
   "See https://docs.copilotkit.ai/intelligence/connect-your-runtime";
 
-test("every API mode rejects a missing or blank Intelligence key", () => {
+test("every API mode rejects a blank Intelligence key", () => {
   for (const mode of [sampleConfig, liveConfig()]) {
-    for (const key of [undefined, "", " \t\n"]) {
+    for (const key of ["", " \t\n"]) {
       assert.throws(() => assertApiDeploymentConfig({ ...mode, intelligenceApiKey: key }), {
         name: "Error",
-        message: missingKeyMessage,
+        message: blankKeyMessage,
       });
     }
   }
 });
 
-test("every API mode accepts a non-empty Intelligence key", () => {
+test("every API mode accepts a missing or non-empty Intelligence key", () => {
   for (const mode of [sampleConfig, liveConfig()]) {
-    assert.doesNotThrow(() =>
-      assertApiDeploymentConfig({ ...mode, intelligenceApiKey: "test-project-key-never-sent" }),
-    );
+    for (const key of [undefined, "test-project-key-never-sent"]) {
+      assert.doesNotThrow(() => assertApiDeploymentConfig({ ...mode, intelligenceApiKey: key }));
+    }
   }
 });
 
@@ -59,7 +60,7 @@ test("Jev mode is off by default and validates explicit modes", async () => {
     CPK_INTELLIGENCE_API_KEY: process.env.CPK_INTELLIGENCE_API_KEY,
   };
   try {
-    process.env.CPK_INTELLIGENCE_API_KEY = "test-project-key-never-sent";
+    delete process.env.CPK_INTELLIGENCE_API_KEY;
     delete process.env.JEV_MODE;
     assert.equal(readConfig().jevMode, "off");
     process.env.JEV_MODE = "sample";

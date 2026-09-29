@@ -58,8 +58,9 @@ export interface Config {
 /** Pinned so live rankings do not shift when TypeSafe moves the `jev-latest` alias. */
 export const defaultJevModel = "jev-1.13.0";
 
+/** CopilotKit Intelligence is optional; without a key the runtime runs locally (SSE mode). */
 export const intelligenceKeyRequiredMessage =
-  "OpenMuse requires CPK_INTELLIGENCE_API_KEY. " +
+  "CPK_INTELLIGENCE_API_KEY enables CopilotKit Intelligence Rich Threads. " +
   "Run `npx copilotkit@latest login` and `npx copilotkit@latest project select`, " +
   "then set the generated server-only key. " +
   "See https://docs.copilotkit.ai/intelligence/connect-your-runtime";
@@ -69,14 +70,9 @@ export function required(name: string, message: string, value = process.env[name
   return value.trim();
 }
 
-export function assertApiDeploymentConfig(
-  config: Config,
-): asserts config is Config & { intelligenceApiKey: string } {
-  required(
-    "CPK_INTELLIGENCE_API_KEY",
-    intelligenceKeyRequiredMessage,
-    config.intelligenceApiKey ?? "",
-  );
+export function assertApiDeploymentConfig(config: Config): void {
+  if (config.intelligenceApiKey !== undefined && !config.intelligenceApiKey.trim())
+    throw new Error(`Blank CPK_INTELLIGENCE_API_KEY. ${intelligenceKeyRequiredMessage}`);
 }
 
 // Provider SDKs retry transient failures before the response starts, with
@@ -120,7 +116,7 @@ export function readConfig(): Config {
     agentBackend: backend,
     agentUrl: process.env.AGENT_URL,
     agentToken: process.env.AGENT_TOKEN,
-    intelligenceApiKey: required("CPK_INTELLIGENCE_API_KEY", intelligenceKeyRequiredMessage),
+    intelligenceApiKey: process.env.CPK_INTELLIGENCE_API_KEY,
     googleClientId: process.env.GOOGLE_CLIENT_ID,
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
     googleRedirectUri: `${publicUrl}/api/google/callback`,
@@ -141,7 +137,12 @@ export function readConfig(): Config {
     throw new Error(
       "Live mode requires OPENMUSE_ACCESS_KEY (24+ characters) and TOKEN_ENCRYPTION_KEY (32-byte base64)",
     );
-  if (mode === "sample" && !["127.0.0.1", "localhost", "::1"].includes(config.host))
-    throw new Error("Sample workspace is local-only. HOST must be a loopback address.");
+  if (
+    mode === "sample" &&
+    !["127.0.0.1", "localhost", "::1", "0.0.0.0", "::"].includes(config.host)
+  )
+    throw new Error(
+      "Sample workspace is local-only. HOST must be loopback or a wildcard address (0.0.0.0/::) for LAN access.",
+    );
   return config;
 }
